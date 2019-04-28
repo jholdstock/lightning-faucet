@@ -25,7 +25,7 @@
         {{if eq .ChannelTxid ""}}
             <p>The Lightning Network Faucet will open a payment channel with the specified node. The node can then either use the channel to facilitate payments, or close the channel which will immediately credit the node on-chain.</p>
 
-            <p><span style="font-weight:bold;">{{ printf "%.2f" .NumCoins }}&nbsp;DCR</span> are available for channel creation. Maximum channel size is <span style="font-weight:bold;">10&nbsp;DCR</span></p>
+            <p><span style="font-weight:bold;">{{ printf "%.2f" .NumCoins }}&nbsp;DCR</span> are available for channel creation. Maximum channel size is <span style="font-weight:bold;">10&nbsp;DCR</span>.</p>
             <p></p>
 
             <form id="openChannelForm" method="post" action="/">
