@@ -427,15 +427,17 @@ func (l *lightningFaucet) fetchHomeState() (*homePageContext, error) {
 		gitHash = nodeInfo.Version[len(nodeInfo.Version)-40:]
 	}
 
+	nodeAddr := ""
 	if len(nodeInfo.Uris) == 0 {
-		log.Println("nodeInfo did not include URIs. Probably external_ip config of dcrlnd is not set")
-		return nil, fmt.Errorf("nodeInfo did not include URIs. Probably external_ip config of dcrlnd is not set")
+		log.Println("warning: nodeInfo did not include a URI. external_ip config of dcrlnd is probably not set")
+	} else {
+		nodeAddr = nodeInfo.Uris[0]
 	}
 
 	return &homePageContext{
 		NumCoins:        dcrutil.Amount(walletBalance.ConfirmedBalance).ToCoin(),
 		GitCommitHash:   strings.Replace(string(gitHash), "'", "", -1),
-		NodeAddr:        nodeInfo.Uris[0],
+		NodeAddr:        nodeAddr,
 		NumConfs:        3,
 		Network:         l.network,
 		FormFields:      make(map[string]string),

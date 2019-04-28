@@ -6,8 +6,9 @@
           <div class="col-md-8 col-12 px-0 px-lg-3 d-none d-md-block h-100">
             <div class="d-flex justify-content-center h-100">
               <div class="align-self-center">
-                {{ .NodeAddr }}
-                <br />
+                {{if ne .NodeAddr ""}}
+                  {{ .NodeAddr }}<br />
+                {{end}}
                 {{if ne .GitCommitHash ""}}
                   Git Commit: dcrlnd @ #{{ .GitCommitHash }}
                 {{end}}
