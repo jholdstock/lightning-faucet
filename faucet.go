@@ -204,7 +204,7 @@ func (l *lightningFaucet) Start() {
 //
 // NOTE: This MUST be run as a goroutine.
 func (l *lightningFaucet) zombieChanSweeper() {
-	fmt.Println("zombie chan sweeper active")
+	log.Println("zombie chan sweeper active")
 
 	// Any channel peer that hasn't been online in more than 48 hours past
 	// from now will have their channels closed out.
@@ -289,7 +289,7 @@ func (l *lightningFaucet) sweepZombieChans(timeCutOff time.Time) {
 		// time cutoff, and the peer isn't currently online, then we'll
 		// force close out the channel.
 		if lastSeen.Before(timeCutOff) && !channel.Active {
-			fmt.Printf("ChannelPoint(%v) is a zombie, last seen: %v",
+			log.Printf("ChannelPoint(%v) is a zombie, last seen: %v",
 				channel.ChannelPoint, lastSeen)
 
 			chanPoint, err := strPointToChanPoint(channel.ChannelPoint)
@@ -299,11 +299,11 @@ func (l *lightningFaucet) sweepZombieChans(timeCutOff time.Time) {
 			}
 			txid, err := l.closeChannel(chanPoint, true)
 			if err != nil {
-				fmt.Printf("unable to close zombie chan: %v", err)
+				log.Printf("unable to close zombie chan: %v", err)
 				continue
 			}
 
-			fmt.Printf("closed zombie chan, txid: %v", txid)
+			log.Printf("closed zombie chan, txid: %v", txid)
 		}
 	}
 }
@@ -319,7 +319,7 @@ func (l *lightningFaucet) closeChannel(chanPoint *lnrpc.ChannelPoint,
 	}
 	stream, err := l.lnd.CloseChannel(ctxb, closeReq)
 	if err != nil {
-		fmt.Printf("unable to start channel close: %v", err)
+		log.Printf("unable to start channel close: %v", err)
 	}
 
 	// Consume the first response which'll be sent once the closing
@@ -376,10 +376,10 @@ type homePageContext struct {
 	// FormFields contains the values which were submitted through the form.
 	FormFields map[string]string
 
-	// PendingChannels contains all of this faucets pending channels
+	// PendingChannels contains all of this faucets pending channels.
 	PendingChannels []*lnrpc.PendingChannelsResponse_PendingOpenChannel
 
-	// ActiveChannels contains all of this faucets active channels
+	// ActiveChannels contains all of this faucets active channels.
 	ActiveChannels []*lnrpc.Channel
 }
 
@@ -392,21 +392,21 @@ func (l *lightningFaucet) fetchHomeState() (*homePageContext, error) {
 	infoReq := &lnrpc.GetInfoRequest{}
 	nodeInfo, err := l.lnd.GetInfo(ctxb, infoReq)
 	if err != nil {
-		log.Println("rpc GetInfoRequest failed: ", err)
+		log.Printf("rpc GetInfoRequest failed: %v", err)
 		return nil, err
 	}
 
 	activeChanReq := &lnrpc.ListChannelsRequest{}
 	activeChannels, err := l.lnd.ListChannels(ctxb, activeChanReq)
 	if err != nil {
-		log.Println("rpc ListChannels failed: ", err)
+		log.Printf("rpc ListChannels failed: %v", err)
 		return nil, err
 	}
 
 	pendingChanReq := &lnrpc.PendingChannelsRequest{}
 	pendingChannels, err := l.lnd.PendingChannels(ctxb, pendingChanReq)
 	if err != nil {
-		log.Println("rpc PendingChannels failed: ", err)
+		log.Printf("rpc PendingChannels failed: %v", err)
 		return nil, err
 	}
 
@@ -415,7 +415,7 @@ func (l *lightningFaucet) fetchHomeState() (*homePageContext, error) {
 	balReq := &lnrpc.WalletBalanceRequest{}
 	walletBalance, err := l.lnd.WalletBalance(ctxb, balReq)
 	if err != nil {
-		log.Println("rpc WalletBalance failed: ", err)
+		log.Printf("rpc WalletBalance failed: %v", err)
 		return nil, err
 	}
 
@@ -650,7 +650,7 @@ func (l *lightningFaucet) openChannel(homeTemplate *template.Template,
 
 	openChanStream, err := l.lnd.OpenChannel(ctxb, openChanReq)
 	if err != nil {
-		log.Println("Opening channel stream failed: ", err)
+		log.Printf("Opening channel stream failed: %v", err)
 		homeState.SubmissionError = ChannelOpenFail
 		homeTemplate.Execute(w, homeState)
 		return
@@ -660,7 +660,7 @@ func (l *lightningFaucet) openChannel(homeTemplate *template.Template,
 	// indicates that the channel has been broadcast to the network.
 	chanUpdate, err := openChanStream.Recv()
 	if err != nil {
-		log.Println("Channel update failed: ", err)
+		log.Printf("Channel update failed: %v", err)
 		homeState.SubmissionError = ChannelOpenFail
 		homeTemplate.Execute(w, homeState)
 		return
@@ -689,7 +689,7 @@ func (l *lightningFaucet) CloseAllChannels() error {
 	}
 
 	for _, channel := range openChannels.Channels {
-		fmt.Printf("Attempting to close channel: %s", channel.ChannelPoint)
+		log.Printf("Attempting to close channel: %s", channel.ChannelPoint)
 
 		chanPoint, err := strPointToChanPoint(channel.ChannelPoint)
 		if err != nil {
@@ -708,7 +708,7 @@ func (l *lightningFaucet) CloseAllChannels() error {
 			continue
 		}
 
-		log.Println("closing txid: ", closeTxid)
+		log.Printf("closing txid: %v", closeTxid)
 	}
 
 	return nil
