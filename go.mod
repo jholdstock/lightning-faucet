@@ -3,6 +3,7 @@ module github.com/decred/lightning-faucet/main
 go 1.12
 
 require (
+	github.com/btcsuite/go-flags v0.0.0-20150116065318-6c288d648c1c
 	github.com/davecgh/go-spew v1.1.1
 	github.com/decred/dcrd/chaincfg/chainhash v1.0.1
 	github.com/decred/dcrd/dcrutil v1.2.0

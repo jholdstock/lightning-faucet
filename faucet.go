@@ -35,26 +35,6 @@ const (
 	minChannelSize int64 = 50000
 )
 
-var (
-	lndHomeDir             = dcrutil.AppDataDir("dcrlnd", false)
-	defaultTLSCertFilename = "tls.cert"
-	tlsCertPath            = filepath.Join(lndHomeDir, defaultTLSCertFilename)
-
-	defaultMacaroonFilename = "admin.macaroon"
-	defaultMacaroonPath     = filepath.Join(
-		lndHomeDir, "data", "chain", "decred", "testnet",
-		defaultMacaroonFilename,
-	)
-
-	lndFaucetHomeDir   = dcrutil.AppDataDir("dcrlnfaucet", false)
-	defaultLogFilename = "dcrlnfaucet.log"
-	defaultLogPath     = filepath.Join(
-		lndFaucetHomeDir, "logs", "decred", "testnet",
-		defaultLogFilename,
-	)
-	defaultLogLevel = "info"
-)
-
 // chanCreationError is an enum which describes the exact nature of an error
 // encountered when a user attempts to create a channel with the faucet. This
 // enum is used within the templates to determine at which input item the error
@@ -154,7 +134,7 @@ type lightningFaucet struct {
 
 // newLightningFaucet creates a new channel faucet that's bound to a cluster of
 // lnd nodes, and uses the passed templates to render the web page.
-func newLightningFaucet(lndHost string,
+func newLightningFaucet(lndNodes string,
 	templates *template.Template, network string) (*lightningFaucet, error) {
 
 	// First attempt to establish a connection to lnd's RPC sever.
@@ -181,7 +161,7 @@ func newLightningFaucet(lndHost string,
 		grpc.WithPerRPCCredentials(macaroons.NewMacaroonCredential(mac)),
 	)
 
-	conn, err := grpc.Dial(*lndNodes, opts...)
+	conn, err := grpc.Dial(lndNodes, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("unable to dial to lnd's gRPC server: %v", err)
 	}
