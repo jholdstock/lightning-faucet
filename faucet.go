@@ -126,16 +126,14 @@ type lightningFaucet struct {
 
 	templates *template.Template
 
-	network string
-
 	openChanMtx  sync.RWMutex
 	openChannels map[wire.OutPoint]time.Time
 }
 
 // newLightningFaucet creates a new channel faucet that's bound to a cluster of
 // lnd nodes, and uses the passed templates to render the web page.
-func newLightningFaucet(lndNodes string,
-	templates *template.Template, network string) (*lightningFaucet, error) {
+func newLightningFaucet(lndNode string,
+	templates *template.Template) (*lightningFaucet, error) {
 
 	// First attempt to establish a connection to lnd's RPC sever.
 	creds, err := credentials.NewClientTLSFromFile(tlsCertPath, "")
@@ -161,7 +159,7 @@ func newLightningFaucet(lndNodes string,
 		grpc.WithPerRPCCredentials(macaroons.NewMacaroonCredential(mac)),
 	)
 
-	conn, err := grpc.Dial(lndNodes, opts...)
+	conn, err := grpc.Dial(lndNode, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("unable to dial to lnd's gRPC server: %v", err)
 	}
@@ -173,7 +171,6 @@ func newLightningFaucet(lndNodes string,
 	return &lightningFaucet{
 		lnd:       lnd,
 		templates: templates,
-		network:   network,
 	}, nil
 }
 
@@ -357,9 +354,6 @@ type homePageContext struct {
 	// open up.
 	NumConfs uint32
 
-	// Network is the network the faucet is running on.
-	Network string
-
 	// FormFields contains the values which were submitted through the form.
 	FormFields map[string]string
 
@@ -426,7 +420,6 @@ func (l *lightningFaucet) fetchHomeState() (*homePageContext, error) {
 		GitCommitHash:   strings.Replace(string(gitHash), "'", "", -1),
 		NodeAddr:        nodeAddr,
 		NumConfs:        3,
-		Network:         l.network,
 		FormFields:      make(map[string]string),
 		ActiveChannels:  activeChannels.Channels,
 		PendingChannels: pendingChannels.PendingOpenChannels,

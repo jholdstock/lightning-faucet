@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/btcsuite/go-flags"
 	"github.com/decred/dcrd/dcrutil"
+	"github.com/jessevdk/go-flags"
 )
 
 const (
@@ -16,14 +16,10 @@ const (
 	defaultLogFilename      = "dcrlnfaucet.log"
 	defaultConfigFilename   = "dcrlnfaucet.conf"
 	defaultLogLevel         = "info"
-	defaultLndIP            = "10.0.0.9"
-	defaultNetParams        = "testnet"
-	defaultLndNodes         = "localhost:10009"
+	defaultLndNode          = "localhost:10009"
 	defaultBindAddr         = ":80"
 	defaultUseLeHTTPS       = false
 	defaultWipeChannels     = false
-	defaultDomain           = "faucet.lightning.community"
-	defaultNetwork          = "decred"
 )
 
 var (
@@ -44,27 +40,20 @@ var (
 )
 
 type config struct {
-	LndIP        string `long:"lnd_ip" description:"the public IP address of the faucet's node"`
-	NetParams    string `long:"net" description:"decred network to operate on"`
-	LndNodes     string `long:"nodes" description:"comma separated list of host:port"`
+	LndNode      string `long:"lnd_node" description:"network address of dcrlnd RPC (host:port)"`
 	BindAddr     string `long:"bind_addr" description:"port to listen for http"`
 	UseLeHTTPS   bool   `long:"use_le_https" description:"use https via lets encrypt"`
 	WipeChannels bool   `long:"wipe_chans" description:"close all faucet channels and exit"`
 	Domain       string `long:"domain" description:"the domain of the faucet, required for TLS"`
-	Network      string `long:"network" description:"the network of the faucet"`
 }
 
 func loadConfig() (*config, []string, error) {
 	// Default config.
 	cfg := config{
-		LndIP:        defaultLndIP,
-		NetParams:    defaultNetParams,
-		LndNodes:     defaultLndNodes,
+		LndNode:      defaultLndNode,
 		BindAddr:     defaultBindAddr,
 		UseLeHTTPS:   defaultUseLeHTTPS,
 		WipeChannels: defaultWipeChannels,
-		Domain:       defaultDomain,
-		Network:      defaultNetwork,
 	}
 
 	// Pre-parse the command line options to see if an alternative config
@@ -133,6 +122,12 @@ func loadConfig() (*config, []string, error) {
 	// logger variables may be used.
 	initLogRotator(defaultLogPath)
 	setLogLevels(defaultLogLevel)
+
+	if cfg.UseLeHTTPS && cfg.Domain == "" {
+		err := fmt.Errorf("%s: domain must be specified to use Let's Encrypt HTTPS", funcName)
+		fmt.Fprintln(os.Stderr, err)
+		return nil, nil, err
+	}
 
 	// Warn about missing config file only after all other configuration is
 	// done.  This prevents the warning on help messages and invalid
